@@ -1,0 +1,18 @@
+.gradle/
+.kotlin/
+build/
+*/build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+
+# Firebase config — never commit real keys
+google-services.json
+GoogleService-Info.plist
+
+# Xcode / iosApp (generated once the iOS project exists)
+iosApp/**/*.xcuserstate
+iosApp/**/xcuserdata/
+iosApp/**/DerivedData/
+iosApp/Pods/

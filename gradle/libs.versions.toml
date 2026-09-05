@@ -1,0 +1,31 @@
+[versions]
+kotlin = "2.1.0"
+agp = "8.7.3"
+compose-multiplatform = "1.7.3"
+android-compileSdk = "35"
+android-minSdk = "26"
+android-targetSdk = "35"
+androidx-activityCompose = "1.9.3"
+kotlinx-coroutines = "1.9.0"
+kotlinx-datetime = "0.6.1"
+firebase-kmp = "2.1.0"
+# The GitLive artifacts above declare their Android counterparts without a
+# version and rely on this BOM to pin them — bump it independently of
+# firebase-kmp when Google ships a new BOM.
+firebase-bom = "33.7.0"
+
+[libraries]
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+# GitLive's Kotlin Firebase SDK: one API for Firestore/Auth/Messaging across
+# Android and iOS. https://github.com/GitLiveApp/firebase-kotlin-sdk
+firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase-kmp" }
+firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase-kmp" }
+firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase-kmp" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
