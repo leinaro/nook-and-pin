@@ -29,10 +29,11 @@ Multiplatform, to show the other half of the range.
 
 ## Status
 
-Early scaffold — module structure, domain models, and repository contract
-are in place; Firebase wiring, the pile/note screens, and the "unpin to
-reveal" animation are next. See [`iosApp/README.md`](iosApp/README.md) for
-why there's no `.xcodeproj` committed yet.
+The full pile → note → reveal → like flow works end to end on Android,
+backed by an in-memory fake repository (`InMemoryPileRepository`) — no
+Firebase project yet, so nothing syncs between devices. That's the next
+step. See [`iosApp/README.md`](iosApp/README.md) for why there's no
+`.xcodeproj` committed yet.
 
 ## Tech stack (planned)
 
@@ -49,7 +50,8 @@ why there's no `.xcodeproj` committed yet.
 ```
 composeApp/
   src/
-    commonMain/   -> domain models, PileRepository contract, shared UI (App.kt)
+    commonMain/   -> domain models, PileRepository contract + in-memory fake,
+                     shared UI (App.kt, PileListScreen, PileDetailScreen, PinnedNoteCard)
     androidMain/  -> MainActivity, Android manifest
     iosMain/      -> MainViewController (hands the shared UI to Xcode)
 iosApp/           -> generated separately, see iosApp/README.md
@@ -71,11 +73,12 @@ project, then build from Xcode.
 
 ## Roadmap
 
+- [x] Pile list screen + note detail screen (in-memory data for now)
+- [x] Note pinning + "unpin to reveal" animation, likes
 - [ ] Firebase project + `google-services.json` / `GoogleService-Info.plist`
 - [ ] `FirebasePileRepository` real implementation (Firestore queries + writes)
 - [ ] `PushNotifier` expect/actual (FCM token registration, notification handling)
-- [ ] Pile list screen + create-pile flow
-- [ ] Note pinning + "unpin to reveal" animation, likes
+- [ ] Create-pile flow (currently one hardcoded demo pile)
 - [ ] Offline cache (SQLDelight) so notes already fetched survive no connection
 - [ ] iOS project generated and building
 - [ ] Freemium model: unlimited piles free, small non-intrusive ads;
