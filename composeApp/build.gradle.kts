@@ -8,6 +8,14 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+// Applied conditionally: google-services.json isn't committed (it's in
+// .gitignore), so CI — which never has the file — can still configure and
+// build this module without it. Firebase just won't auto-initialize at
+// runtime without a real one; see README for how to get your own.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)

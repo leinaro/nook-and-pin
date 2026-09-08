@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(pileData) {
+      return isSignedIn() && request.auth.uid in pileData.memberIds;
+    }
+
+    match /piles/{pileId} {
+      allow read: if isMember(resource.data);
+      // Anyone signed in can create a pile as long as they add themselves
+      // as a member; membership can't be granted to someone else after the
+      // fact except by an existing member (invites happen inside the app,
+      // not by editing this document directly from outside it).
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.memberIds;
+      allow update: if isMember(resource.data) && request.auth.uid in request.resource.data.memberIds;
+      allow delete: if false;
+
+      match /notes/{noteId} {
+        allow read: if isMember(get(/databases/$(database)/documents/piles/$(pileId)).data);
+        allow create: if isMember(get(/databases/$(database)/documents/piles/$(pileId)).data)
+                      && request.resource.data.authorId == request.auth.uid;
+        // Notes are immutable content-wise (see Note.kt) — updates are only
+        // ever markRead/toggleLike touching readAt/likedByUserIds, never text.
+        allow update: if isMember(get(/databases/$(database)/documents/piles/$(pileId)).data)
+                      && request.resource.data.text == resource.data.text
+                      && request.resource.data.authorId == resource.data.authorId;
+        allow delete: if false;
+      }
+    }
+  }
+}

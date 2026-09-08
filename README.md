@@ -30,10 +30,26 @@ Multiplatform, to show the other half of the range.
 ## Status
 
 The full pile → note → reveal → like flow works end to end on Android,
-backed by an in-memory fake repository (`InMemoryPileRepository`) — no
-Firebase project yet, so nothing syncs between devices. That's the next
-step. See [`iosApp/README.md`](iosApp/README.md) for why there's no
-`.xcodeproj` committed yet.
+still backed by an in-memory fake repository (`InMemoryPileRepository`) —
+nothing syncs between devices yet.
+
+The Firebase project itself exists now (`nook-and-pin`, `us-central1`):
+Firestore database created, security rules deployed (member-only access —
+see [`firestore.rules`](firestore.rules)), Android app registered. What's
+still missing before `FirebasePileRepository` can replace the in-memory one:
+an Auth provider (nothing is enabled yet, so the rules currently block
+everyone — that's intentional, not a bug) and the actual Firestore
+queries/writes.
+
+See [`iosApp/README.md`](iosApp/README.md) for why there's no `.xcodeproj`
+committed yet.
+
+### Running this yourself
+
+`google-services.json` is intentionally not committed. If you clone this
+repo, either drop your own Firebase Android app's config file at
+`composeApp/google-services.json`, or just run it as-is — the app still
+builds and runs fine without it, using `InMemoryPileRepository`.
 
 ## Tech stack (planned)
 
@@ -75,7 +91,9 @@ project, then build from Xcode.
 
 - [x] Pile list screen + note detail screen (in-memory data for now)
 - [x] Note pinning + "unpin to reveal" animation, likes
-- [ ] Firebase project + `google-services.json` / `GoogleService-Info.plist`
+- [x] Firebase project created, Android app registered, Firestore + rules deployed
+- [ ] `GoogleService-Info.plist` for iOS (once the iOS app is registered)
+- [ ] Auth provider (likely Google Sign-In or email link — undecided)
 - [ ] `FirebasePileRepository` real implementation (Firestore queries + writes)
 - [ ] `PushNotifier` expect/actual (FCM token registration, notification handling)
 - [ ] Create-pile flow (currently one hardcoded demo pile)
