@@ -29,20 +29,22 @@ Multiplatform, to show the other half of the range.
 
 ## Status
 
-The full pile → note → reveal → like flow works end to end on Android,
-still backed by an in-memory fake repository (`InMemoryPileRepository`) —
-nothing syncs between devices yet.
+**Auth is real.** Sign-in with Google works end to end on Android —
+Credential Manager shows the actual system account picker, the resulting
+ID token becomes a real Firebase-verified session (verified on device).
 
-The Firebase project itself exists now (`nook-and-pin`, `us-central1`):
-Firestore database created, security rules deployed (member-only access —
-see [`firestore.rules`](firestore.rules)), Android app registered. What's
-still missing before `FirebasePileRepository` can replace the in-memory one:
-an Auth provider (nothing is enabled yet, so the rules currently block
-everyone — that's intentional, not a bug) and the actual Firestore
-queries/writes.
+**Piles/notes are still fake.** The pile → note → reveal → like flow works,
+but it's backed by an in-memory repository (`InMemoryPileRepository`) —
+nothing syncs between devices yet. The Firebase project exists
+(`nook-and-pin`, `us-central1`): Firestore database created, security rules
+deployed (member-only access — see [`firestore.rules`](firestore.rules)).
+What's left before `FirebasePileRepository` can replace the in-memory one is
+just the Firestore queries/writes themselves — Auth, the actual blocker,
+is done.
 
 See [`iosApp/README.md`](iosApp/README.md) for why there's no `.xcodeproj`
-committed yet.
+committed yet, and why Google Sign-In on iOS is a documented TODO rather
+than implemented.
 
 ### Running this yourself
 
@@ -81,9 +83,6 @@ iosApp/           -> generated separately, see iosApp/README.md
 ./gradlew :composeApp:assembleDebug
 ```
 
-(No `gradlew` wrapper is committed yet — run `gradle wrapper --gradle-version 8.11`
-once, or just open the project in Android Studio and let it generate one.)
-
 **iOS:** follow [`iosApp/README.md`](iosApp/README.md) to generate the Xcode
 project, then build from Xcode.
 
@@ -92,8 +91,9 @@ project, then build from Xcode.
 - [x] Pile list screen + note detail screen (in-memory data for now)
 - [x] Note pinning + "unpin to reveal" animation, likes
 - [x] Firebase project created, Android app registered, Firestore + rules deployed
+- [x] Google Sign-In on Android (Credential Manager -> Firebase Auth), verified on device
+- [ ] Google Sign-In on iOS (GIDSignIn bridged from Swift, once iosApp exists)
 - [ ] `GoogleService-Info.plist` for iOS (once the iOS app is registered)
-- [ ] Auth provider (likely Google Sign-In or email link — undecided)
 - [ ] `FirebasePileRepository` real implementation (Firestore queries + writes)
 - [ ] `PushNotifier` expect/actual (FCM token registration, notification handling)
 - [ ] Create-pile flow (currently one hardcoded demo pile)
