@@ -39,6 +39,9 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services.auth)
+            implementation(libs.googleid)
             // Pins the concrete com.google.firebase:* versions that the
             // GitLive artifacts below depend on but don't version themselves.
             // Spelled out as a coordinate (rather than libs.firebase.bom)

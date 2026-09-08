@@ -18,11 +18,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.leinaro.nookandpin.data.InMemoryPileRepository
+import com.leinaro.nookandpin.domain.AuthRepository
 import com.leinaro.nookandpin.domain.Pile
 import kotlinx.coroutines.launch
-
-// TODO: replace with a real signed-in user id once Firebase Auth is wired.
-private const val CURRENT_USER_ID = "you"
 
 private sealed interface Screen {
     data object PileList : Screen
@@ -31,28 +29,47 @@ private sealed interface Screen {
 
 /**
  * Shared entry point rendered identically on Android (via `MainActivity`)
- * and iOS (via `MainViewController`).
+ * and iOS (via `MainViewController`), both of which build the real
+ * [AuthRepository] (Google sign-in token acquisition is platform-specific;
+ * see [com.leinaro.nookandpin.data.FirebaseAuthRepository]'s doc).
  *
- * Backed by [InMemoryPileRepository] for now — a pure in-memory fake, no
- * network — so the pile/note/like/reveal flow is fully demoable before
- * there's a Firebase project to point at. Swapping the fake for
- * `FirebasePileRepository` here is the only change the sync work needs;
- * [PileListScreen], [PileDetailScreen] and [PinnedNoteCard] don't know or
- * care which one is behind the [com.leinaro.nookandpin.domain.PileRepository]
- * interface.
+ * Piles/notes are still backed by [InMemoryPileRepository] — a pure
+ * in-memory fake, no network — so that flow is fully demoable while
+ * `FirebasePileRepository`'s real Firestore wiring is still TODO. Auth is
+ * real: signing in gets you an actual Firebase-verified identity, it's just
+ * not used to sync anything yet.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App() {
-    val repository = remember { InMemoryPileRepository(CURRENT_USER_ID) }
+fun App(authRepository: AuthRepository) {
     val scope = rememberCoroutineScope()
-    var screen by remember { mutableStateOf<Screen>(Screen.PileList) }
+    val user by authRepository.currentUser.collectAsState()
 
     MaterialTheme {
+        val signedInUser = user
+        if (signedInUser == null) {
+            SignInScreen(onSignInClick = { scope.launch { authRepository.signInWithGoogle() } })
+            return@MaterialTheme
+        }
+
+        val pileRepository = remember(signedInUser.uid) { InMemoryPileRepository(signedInUser.uid) }
+        var screen by remember(signedInUser.uid) { mutableStateOf<Screen>(Screen.PileList) }
+
         when (val current = screen) {
             is Screen.PileList -> {
-                val piles by repository.observePiles(CURRENT_USER_ID).collectAsState(initial = emptyList())
-                Scaffold(topBar = { TopAppBar(title = { Text("Nook & Pin") }) }) { padding ->
+                val piles by pileRepository.observePiles(signedInUser.uid).collectAsState(initial = emptyList())
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("Nook & Pin") },
+                            actions = {
+                                TextButton(onClick = { scope.launch { authRepository.signOut() } }) {
+                                    Text("Sign out")
+                                }
+                            }
+                        )
+                    }
+                ) { padding ->
                     Box(Modifier.fillMaxSize().padding(padding)) {
                         PileListScreen(piles = piles, onPileClick = { screen = Screen.PileDetail(it) })
                     }
@@ -60,7 +77,7 @@ fun App() {
             }
 
             is Screen.PileDetail -> {
-                val notes by repository.observeNotes(current.pile.id).collectAsState(initial = emptyList())
+                val notes by pileRepository.observeNotes(current.pile.id).collectAsState(initial = emptyList())
                 Scaffold(
                     topBar = {
                         TopAppBar(
@@ -75,11 +92,15 @@ fun App() {
                         PileDetailScreen(
                             pileName = current.pile.name,
                             notes = notes,
-                            currentUserId = CURRENT_USER_ID,
-                            onReveal = { note -> scope.launch { repository.markRead(note.id, CURRENT_USER_ID) } },
-                            onToggleLike = { note -> scope.launch { repository.toggleLike(note.id, CURRENT_USER_ID) } },
+                            currentUserId = signedInUser.uid,
+                            onReveal = { note ->
+                                scope.launch { pileRepository.markRead(note.id, signedInUser.uid) }
+                            },
+                            onToggleLike = { note ->
+                                scope.launch { pileRepository.toggleLike(note.id, signedInUser.uid) }
+                            },
                             onPinNote = { text ->
-                                scope.launch { repository.pinNote(current.pile.id, CURRENT_USER_ID, text) }
+                                scope.launch { pileRepository.pinNote(current.pile.id, signedInUser.uid, text) }
                             }
                         )
                     }
