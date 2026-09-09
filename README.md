@@ -29,29 +29,29 @@ Multiplatform, to show the other half of the range.
 
 ## Status
 
-**Auth is real.** Sign-in with Google works end to end on Android —
-Credential Manager shows the actual system account picker, the resulting
-ID token becomes a real Firebase-verified session (verified on device).
+**The whole loop is real on Android, end to end**: sign in with Google
+(Credential Manager, a real Firebase-verified session), create a pile,
+pin a note, reveal it, like it — all of it hitting the actual `nook-and-pin`
+Firestore project, gated by [`firestore.rules`](firestore.rules) so only a
+pile's members can touch it. Verified on device and checked server-side via
+the Firestore REST API, not just "the UI updated."
 
-**Piles/notes are still fake.** The pile → note → reveal → like flow works,
-but it's backed by an in-memory repository (`InMemoryPileRepository`) —
-nothing syncs between devices yet. The Firebase project exists
-(`nook-and-pin`, `us-central1`): Firestore database created, security rules
-deployed (member-only access — see [`firestore.rules`](firestore.rules)).
-What's left before `FirebasePileRepository` can replace the in-memory one is
-just the Firestore queries/writes themselves — Auth, the actual blocker,
-is done.
+What's still missing: a real invite flow (right now creating a pile only
+adds yourself — there's no way yet to add a second person without knowing
+their Firebase uid), push notifications, offline caching, and iOS (see
+[`iosApp/README.md`](iosApp/README.md) for why there's no `.xcodeproj`
+committed yet, and why Google Sign-In there is a documented TODO).
 
-See [`iosApp/README.md`](iosApp/README.md) for why there's no `.xcodeproj`
-committed yet, and why Google Sign-In on iOS is a documented TODO rather
-than implemented.
+`InMemoryPileRepository` still exists as a reference/fallback implementation
+of the same `PileRepository` interface, but `App()` now wires up
+`FirebasePileRepository` by default.
 
 ### Running this yourself
 
 `google-services.json` is intentionally not committed. If you clone this
-repo, either drop your own Firebase Android app's config file at
-`composeApp/google-services.json`, or just run it as-is — the app still
-builds and runs fine without it, using `InMemoryPileRepository`.
+repo, drop your own Firebase Android app's config file at
+`composeApp/google-services.json` — without it, `FirebasePileRepository`
+has nothing to talk to.
 
 ## Tech stack (planned)
 
@@ -88,15 +88,18 @@ project, then build from Xcode.
 
 ## Roadmap
 
-- [x] Pile list screen + note detail screen (in-memory data for now)
+- [x] Pile list screen + note detail screen
 - [x] Note pinning + "unpin to reveal" animation, likes
 - [x] Firebase project created, Android app registered, Firestore + rules deployed
 - [x] Google Sign-In on Android (Credential Manager -> Firebase Auth), verified on device
+- [x] `FirebasePileRepository` real implementation, verified end-to-end against
+      the live project (server-side, not just UI state)
+- [x] Create-pile flow (single-member only — see invite flow below)
+- [ ] Invite a second real member to a pile (needs a way to look up a uid
+      by email, e.g. a Cloud Function — right now you can only add yourself)
 - [ ] Google Sign-In on iOS (GIDSignIn bridged from Swift, once iosApp exists)
 - [ ] `GoogleService-Info.plist` for iOS (once the iOS app is registered)
-- [ ] `FirebasePileRepository` real implementation (Firestore queries + writes)
 - [ ] `PushNotifier` expect/actual (FCM token registration, notification handling)
-- [ ] Create-pile flow (currently one hardcoded demo pile)
 - [ ] Offline cache (SQLDelight) so notes already fetched survive no connection
 - [ ] iOS project generated and building
 - [ ] Freemium model: unlimited piles free, small non-intrusive ads;
