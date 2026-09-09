@@ -14,6 +14,6 @@ interface PileRepository {
 
     suspend fun createPile(name: String, memberIds: Set<String>, createdBy: String): Pile
     suspend fun pinNote(pileId: String, authorId: String, text: String): Note
-    suspend fun markRead(noteId: String, userId: String)
-    suspend fun toggleLike(noteId: String, userId: String)
+    suspend fun markRead(pileId: String, noteId: String, userId: String)
+    suspend fun toggleLike(pileId: String, noteId: String, userId: String)
 }

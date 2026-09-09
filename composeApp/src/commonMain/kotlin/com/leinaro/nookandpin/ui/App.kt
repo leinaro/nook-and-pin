@@ -17,7 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.leinaro.nookandpin.data.InMemoryPileRepository
+import com.leinaro.nookandpin.data.FirebasePileRepository
 import com.leinaro.nookandpin.domain.AuthRepository
 import com.leinaro.nookandpin.domain.Pile
 import kotlinx.coroutines.launch
@@ -33,11 +33,9 @@ private sealed interface Screen {
  * [AuthRepository] (Google sign-in token acquisition is platform-specific;
  * see [com.leinaro.nookandpin.data.FirebaseAuthRepository]'s doc).
  *
- * Piles/notes are still backed by [InMemoryPileRepository] — a pure
- * in-memory fake, no network — so that flow is fully demoable while
- * `FirebasePileRepository`'s real Firestore wiring is still TODO. Auth is
- * real: signing in gets you an actual Firebase-verified identity, it's just
- * not used to sync anything yet.
+ * Piles/notes are backed by [FirebasePileRepository] — real Firestore reads
+ * and writes, gated by the project's `firestore.rules` so only a pile's
+ * members can see or touch it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +50,7 @@ fun App(authRepository: AuthRepository) {
             return@MaterialTheme
         }
 
-        val pileRepository = remember(signedInUser.uid) { InMemoryPileRepository(signedInUser.uid) }
+        val pileRepository = remember { FirebasePileRepository() }
         var screen by remember(signedInUser.uid) { mutableStateOf<Screen>(Screen.PileList) }
 
         when (val current = screen) {
@@ -71,7 +69,13 @@ fun App(authRepository: AuthRepository) {
                     }
                 ) { padding ->
                     Box(Modifier.fillMaxSize().padding(padding)) {
-                        PileListScreen(piles = piles, onPileClick = { screen = Screen.PileDetail(it) })
+                        PileListScreen(
+                            piles = piles,
+                            onPileClick = { screen = Screen.PileDetail(it) },
+                            onCreatePile = { name ->
+                                scope.launch { pileRepository.createPile(name, setOf(signedInUser.uid), signedInUser.uid) }
+                            }
+                        )
                     }
                 }
             }
@@ -94,10 +98,10 @@ fun App(authRepository: AuthRepository) {
                             notes = notes,
                             currentUserId = signedInUser.uid,
                             onReveal = { note ->
-                                scope.launch { pileRepository.markRead(note.id, signedInUser.uid) }
+                                scope.launch { pileRepository.markRead(current.pile.id, note.id, signedInUser.uid) }
                             },
                             onToggleLike = { note ->
-                                scope.launch { pileRepository.toggleLike(note.id, signedInUser.uid) }
+                                scope.launch { pileRepository.toggleLike(current.pile.id, note.id, signedInUser.uid) }
                             },
                             onPinNote = { text ->
                                 scope.launch { pileRepository.pinNote(current.pile.id, signedInUser.uid, text) }

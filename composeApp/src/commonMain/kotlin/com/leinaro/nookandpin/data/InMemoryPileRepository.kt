@@ -66,20 +66,21 @@ class InMemoryPileRepository(currentUserId: String) : PileRepository {
         return note
     }
 
-    override suspend fun markRead(noteId: String, userId: String) {
-        updateNote(noteId) { note -> if (note.readAt == null) note.copy(readAt = Clock.System.now()) else note }
+    override suspend fun markRead(pileId: String, noteId: String, userId: String) {
+        updateNote(pileId, noteId) { note -> if (note.readAt == null) note.copy(readAt = Clock.System.now()) else note }
     }
 
-    override suspend fun toggleLike(noteId: String, userId: String) {
-        updateNote(noteId) { note ->
+    override suspend fun toggleLike(pileId: String, noteId: String, userId: String) {
+        updateNote(pileId, noteId) { note ->
             if (note.isLikedBy(userId)) note.copy(likedByUserIds = note.likedByUserIds - userId)
             else note.copy(likedByUserIds = note.likedByUserIds + userId)
         }
     }
 
-    private fun updateNote(noteId: String, transform: (Note) -> Note) {
+    private fun updateNote(pileId: String, noteId: String, transform: (Note) -> Note) {
         notesByPile.update { byPile ->
-            byPile.mapValues { (_, notes) -> notes.map { if (it.id == noteId) transform(it) else it } }
+            val notes = byPile[pileId].orEmpty()
+            byPile + (pileId to notes.map { if (it.id == noteId) transform(it) else it })
         }
     }
 
