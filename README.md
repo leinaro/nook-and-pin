@@ -29,16 +29,21 @@ Multiplatform, to show the other half of the range.
 
 ## Status
 
-**The whole loop is real on Android, end to end**: sign in with Google
-(Credential Manager, a real Firebase-verified session), create a pile,
-pin a note, reveal it, like it — all of it hitting the actual `nook-and-pin`
-Firestore project, gated by [`firestore.rules`](firestore.rules) so only a
-pile's members can touch it. Verified on device and checked server-side via
-the Firestore REST API, not just "the UI updated."
+**The whole loop is real on Android, end to end, between two actual
+people**: sign in with Google (Credential Manager, a real
+Firebase-verified session), create a pile, invite a second person by
+email, pin a note, reveal it, like it — all of it hitting the actual
+`nook-and-pin` Firestore project, gated by
+[`firestore.rules`](firestore.rules) so only a pile's members can touch it.
+Verified on device with two real Google accounts and checked server-side
+via the Firestore REST API at every step, not just "the UI updated."
 
-What's still missing: a real invite flow (right now creating a pile only
-adds yourself — there's no way yet to add a second person without knowing
-their Firebase uid), push notifications, offline caching, and iOS (see
+The invite flow (see [`FirebaseUserDirectory.kt`](composeApp/src/commonMain/kotlin/com/leinaro/nookandpin/data/FirebaseUserDirectory.kt))
+looks someone up by email via a `users/{uid}` profile written on sign-in —
+a deliberate choice to avoid needing a Cloud Function, which would need
+this project on a paid plan. The doc there spells out the privacy tradeoff.
+
+What's still missing: push notifications, offline caching, and iOS (see
 [`iosApp/README.md`](iosApp/README.md) for why there's no `.xcodeproj`
 committed yet, and why Google Sign-In there is a documented TODO).
 
@@ -94,9 +99,9 @@ project, then build from Xcode.
 - [x] Google Sign-In on Android (Credential Manager -> Firebase Auth), verified on device
 - [x] `FirebasePileRepository` real implementation, verified end-to-end against
       the live project (server-side, not just UI state)
-- [x] Create-pile flow (single-member only — see invite flow below)
-- [ ] Invite a second real member to a pile (needs a way to look up a uid
-      by email, e.g. a Cloud Function — right now you can only add yourself)
+- [x] Create-pile flow
+- [x] Invite a second real member to a pile by email, verified with two
+      real Google accounts sharing a pile
 - [ ] Google Sign-In on iOS (GIDSignIn bridged from Swift, once iosApp exists)
 - [ ] `GoogleService-Info.plist` for iOS (once the iOS app is registered)
 - [ ] `PushNotifier` expect/actual (FCM token registration, notification handling)
