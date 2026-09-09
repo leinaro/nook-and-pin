@@ -30,7 +30,11 @@ class FirebaseAuthRepository(
         val idToken = requestGoogleIdToken()
         val credential = GoogleAuthProvider.credential(idToken, null)
         val result = Firebase.auth.signInWithCredential(credential)
-        _currentUser.value = result.user?.toAuthUser()
+        val user = result.user?.toAuthUser()
+        _currentUser.value = user
+        // So UserDirectory.findUidByEmail can find this person later — see
+        // FirebaseUserDirectory.kt for the tradeoffs of doing it this way.
+        user?.let { upsertUserProfile(it) }
     }
 
     override suspend fun signOut() {
@@ -38,5 +42,5 @@ class FirebaseAuthRepository(
         _currentUser.value = null
     }
 
-    private fun FirebaseUser.toAuthUser() = AuthUser(uid = uid, displayName = displayName, photoUrl = photoURL)
+    private fun FirebaseUser.toAuthUser() = AuthUser(uid = uid, displayName = displayName, photoUrl = photoURL, email = email)
 }

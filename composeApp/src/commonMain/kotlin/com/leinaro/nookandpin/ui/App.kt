@@ -18,6 +18,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.leinaro.nookandpin.data.FirebasePileRepository
+import com.leinaro.nookandpin.data.FirebaseUserDirectory
 import com.leinaro.nookandpin.domain.AuthRepository
 import com.leinaro.nookandpin.domain.Pile
 import kotlinx.coroutines.launch
@@ -51,6 +52,7 @@ fun App(authRepository: AuthRepository) {
         }
 
         val pileRepository = remember { FirebasePileRepository() }
+        val userDirectory = remember { FirebaseUserDirectory() }
         var screen by remember(signedInUser.uid) { mutableStateOf<Screen>(Screen.PileList) }
 
         when (val current = screen) {
@@ -105,6 +107,15 @@ fun App(authRepository: AuthRepository) {
                             },
                             onPinNote = { text ->
                                 scope.launch { pileRepository.pinNote(current.pile.id, signedInUser.uid, text) }
+                            },
+                            onInvite = { email ->
+                                val uid = userDirectory.findUidByEmail(email)
+                                if (uid != null) {
+                                    pileRepository.addMember(current.pile.id, uid)
+                                    true
+                                } else {
+                                    false
+                                }
                             }
                         )
                     }

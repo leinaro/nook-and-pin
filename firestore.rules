@@ -33,5 +33,15 @@ service cloud.firestore {
         allow delete: if false;
       }
     }
+
+    // A minimal public-to-signed-in-users profile, so someone can be found
+    // by email when inviting them to a pile (see FirebaseUserDirectory.kt
+    // for the tradeoffs of doing this without a Cloud Function). Findable
+    // only by an exact email match — `list` is still gated by isSignedIn(),
+    // it's not a way to enumerate every user.
+    match /users/{userId} {
+      allow get, list: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
   }
 }

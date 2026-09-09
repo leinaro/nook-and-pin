@@ -48,6 +48,10 @@ class FirebasePileRepository : PileRepository {
         return Pile(id = ref.id, name = name, memberIds = memberIds, createdBy = createdBy)
     }
 
+    override suspend fun addMember(pileId: String, uid: String) {
+        piles().document(pileId).update("memberIds" to FieldValue.arrayUnion(uid))
+    }
+
     override suspend fun pinNote(pileId: String, authorId: String, text: String): Note {
         val now = Timestamp.now()
         val document = NoteDocument(authorId = authorId, text = text, createdAt = now)

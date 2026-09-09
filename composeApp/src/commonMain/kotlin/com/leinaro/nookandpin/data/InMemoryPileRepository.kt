@@ -54,6 +54,10 @@ class InMemoryPileRepository(currentUserId: String) : PileRepository {
         return pile
     }
 
+    override suspend fun addMember(pileId: String, uid: String) {
+        piles.update { all -> all.map { if (it.id == pileId) it.copy(memberIds = it.memberIds + uid) else it } }
+    }
+
     override suspend fun pinNote(pileId: String, authorId: String, text: String): Note {
         val note = Note(
             id = nextId(),
